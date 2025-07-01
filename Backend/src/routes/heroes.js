@@ -10,6 +10,8 @@ router.get(
     query('name')
       .optional()
       .isString()
+      .trim()
+      .escape()
       .withMessage('O parâmetro de nome deve ser um texto'),
   ],
   (req, res) => {
@@ -48,12 +50,24 @@ router.get('/:id', [param('id').isInt()], (req, res) => {
 router.post(
   '/',
   [
-    body('name').trim().notEmpty().withMessage('Nome é obrigatório'),
-    body('description').trim().notEmpty().withMessage('Descrição é obrigatória'),
+    body('name')
+      .trim()
+      .escape()
+      .notEmpty()
+      .withMessage('Nome é obrigatório'),
+
+    body('description')
+      .trim()
+      .escape()
+      .notEmpty()
+      .withMessage('Descrição é obrigatória'),
+
     body('imageUrl')
       .trim()
-      .notEmpty().withMessage('URL da imagem é obrigatória')
-      .isURL().withMessage('URL da imagem inválida'),
+      .notEmpty()
+      .withMessage('URL da imagem é obrigatória')
+      .isURL()
+      .withMessage('URL da imagem inválida'),
   ],
   (req, res) => {
     const errors = validationResult(req);
@@ -73,9 +87,26 @@ router.put(
   '/:id',
   [
     param('id').isInt().withMessage('ID inválido'),
-    body('name').optional().notEmpty().withMessage('Nome não pode ser vazio'),
-    body('description').optional().notEmpty().withMessage('Descrição não pode ser vazia'),
-    body('imageUrl').optional().isURL().withMessage('URL da imagem inválida'),
+
+    body('name')
+      .optional()
+      .trim()
+      .escape()
+      .notEmpty()
+      .withMessage('Nome não pode ser vazio'),
+
+    body('description')
+      .optional()
+      .trim()
+      .escape()
+      .notEmpty()
+      .withMessage('Descrição não pode ser vazia'),
+
+    body('imageUrl')
+      .optional()
+      .trim()
+      .isURL()
+      .withMessage('URL da imagem inválida'),
   ],
   (req, res) => {
     const errors = validationResult(req);
