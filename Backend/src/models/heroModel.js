@@ -19,6 +19,23 @@ const HeroModel = {
       }
     );
   },
+
+  update: (id, { name, description, imageUrl }, callback) => {
+    const sql = `
+      UPDATE heroes
+      SET name = ?, description = ?, imageUrl = ?
+      WHERE id = ?
+    `;
+    db.run(sql, [name, description, imageUrl, id], function (err) {
+      callback(err);
+    });
+  },
+
+  delete: (id, callback) => {
+    db.run('DELETE FROM heroes WHERE id = ?', [id], function (err) {
+      callback(err);
+    });
+  },
 };
 
 module.exports = HeroModel;
