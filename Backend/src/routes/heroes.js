@@ -1,14 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const Hero = require('../models/heroModel');
+const { body, query, validationResult } = require('express-validator');
 
-// GET: Todos os heróis
-router.get('/', (req, res) => {
-  Hero.getAll((err, heroes) => {
-    if (err) return res.status(500).json({ error: 'Erro ao buscar heróis' });
-    res.json(heroes);
-  });
-});
+// GET: Todos os heróis (com filtro por nome e validação)
+router.get(
+  '/',
+  [
+    query('name')
+      .optional()
+      .isString()
+      .withMessage('O parâmetro de nome deve ser um texto'),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    Hero.getAll((err, heroes) => {
+      if (err) return res.status(500).json({ error: 'Erro ao buscar heróis' });
+
+      const { name } = req.query;
+
+      const filtered = name
+        ? heroes.filter((h) =>
+            h.name?.toLowerCase().includes(name.toLowerCase())
+          )
+        : heroes;
+
+      res.json(filtered);
+    });
+  }
+);
 
 // GET: Um herói por ID
 router.get('/:id', (req, res) => {
@@ -18,18 +42,29 @@ router.get('/:id', (req, res) => {
   });
 });
 
-// POST: Criar novo herói
-router.post('/', (req, res) => {
-  const { name, description, imageUrl } = req.body;
+// POST: Criar novo herói com validação
+router.post(
+  '/',
+  [
+    body('name').notEmpty().withMessage('Nome é obrigatório'),
+    body('description').notEmpty().withMessage('Descrição é obrigatória'),
+    body('imageUrl')
+      .notEmpty().withMessage('URL da imagem é obrigatória')
+      .isURL().withMessage('URL da imagem inválida'),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  if (!name || !description || !imageUrl) {
-    return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+    const { name, description, imageUrl } = req.body;
+
+    Hero.create({ name, description, imageUrl }, (err, newHero) => {
+      if (err) return res.status(500).json({ error: 'Erro ao criar herói' });
+      res.status(201).json(newHero);
+    });
   }
-
-  Hero.create({ name, description, imageUrl }, (err, newHero) => {
-    if (err) return res.status(500).json({ error: 'Erro ao criar herói' });
-    res.status(201).json(newHero);
-  });
-});
+);
 
 module.exports = router;
