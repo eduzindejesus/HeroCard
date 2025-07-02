@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const bcrypt = require('bcrypt');
 
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
 
   db.get(
-    'SELECT * FROM users WHERE username = ? AND password = ?',
-    [username, password],
-    (err, user) => {
+    'SELECT * FROM users WHERE username = ?',
+    [username],
+    async (err, user) => {
       if (err) {
         console.error('Erro no login:', err);
         return res.status(500).json({ error: 'Erro no servidor' });
@@ -18,7 +19,11 @@ router.post('/login', (req, res) => {
         return res.status(401).json({ error: 'Credenciais inválidas' });
       }
 
-      // Retorna sucesso (você pode adicionar JWT aqui depois)
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Credenciais inválidas' });
+      }
+
       res.json({ success: true, user: { id: user.id, username: user.username } });
     }
   );
